@@ -41,7 +41,9 @@ def generate_ec_keypair() -> Tuple[bytes, bytes]:
 
 
 def load_private_key(private_pem: bytes):
-    return serialization.load_pem_private_key(private_pem, password=None, backend=default_backend())
+    return serialization.load_pem_private_key(
+        private_pem, password=None, backend=default_backend()
+    )
 
 
 def load_public_key(public_pem: bytes):
@@ -58,7 +60,9 @@ def derive_shared_secret(private_pem: bytes, peer_public_pem: bytes) -> bytes:
     return shared_secret
 
 
-def derive_session_key(shared_secret: bytes, salt: bytes = None, info: bytes = b"CryptoVault-Session") -> bytes:
+def derive_session_key(
+    shared_secret: bytes, salt: bytes = None, info: bytes = b"CryptoVault-Session"
+) -> bytes:
     """
     Derive a 32-byte session key from raw shared secret using HKDF-SHA256.
     """
@@ -75,7 +79,9 @@ def derive_session_key(shared_secret: bytes, salt: bytes = None, info: bytes = b
     return key
 
 
-def ecdh_session_key_pair(sender_private_pem: bytes, recipient_public_pem: bytes) -> Tuple[bytes, bytes]:
+def ecdh_session_key_pair(
+    sender_private_pem: bytes, recipient_public_pem: bytes
+) -> Tuple[bytes, bytes]:
     """
     Derive session key and return (key, salt) used, suitable for AES-GCM.
     """

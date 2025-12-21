@@ -5,7 +5,7 @@ Provides low-level encrypt/decrypt and a high-level end-to-end function
 that uses ECDH-derived session keys.
 """
 
-from typing import Tuple, Dict
+from typing import Dict
 import os
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
@@ -29,7 +29,9 @@ def encrypt_aes_gcm(plaintext: bytes, key: bytes, aad: bytes = b"") -> Dict[str,
     return {"nonce": nonce, "ciphertext": ciphertext}
 
 
-def decrypt_aes_gcm(ciphertext: bytes, key: bytes, nonce: bytes, aad: bytes = b"") -> bytes:
+def decrypt_aes_gcm(
+    ciphertext: bytes, key: bytes, nonce: bytes, aad: bytes = b""
+) -> bytes:
     """
     Decrypt AES-256-GCM ciphertext.
     """
@@ -45,7 +47,12 @@ def decrypt_aes_gcm(ciphertext: bytes, key: bytes, nonce: bytes, aad: bytes = b"
     return plaintext
 
 
-def encrypt_message_e2e(plaintext: bytes, sender_private_pem: bytes, recipient_public_pem: bytes, aad: bytes = b"CryptoVault") -> Dict[str, bytes]:
+def encrypt_message_e2e(
+    plaintext: bytes,
+    sender_private_pem: bytes,
+    recipient_public_pem: bytes,
+    aad: bytes = b"CryptoVault",
+) -> Dict[str, bytes]:
     """
     End-to-end encrypt a message using ECDH-derived session key.
 
@@ -58,7 +65,14 @@ def encrypt_message_e2e(plaintext: bytes, sender_private_pem: bytes, recipient_p
     return sealed
 
 
-def decrypt_message_e2e(ciphertext: bytes, recipient_private_pem: bytes, sender_public_pem: bytes, nonce: bytes, salt: bytes, aad: bytes = b"CryptoVault") -> bytes:
+def decrypt_message_e2e(
+    ciphertext: bytes,
+    recipient_private_pem: bytes,
+    sender_public_pem: bytes,
+    nonce: bytes,
+    salt: bytes,
+    aad: bytes = b"CryptoVault",
+) -> bytes:
     """
     Decrypt an end-to-end encrypted message using ECDH-derived session key.
     """

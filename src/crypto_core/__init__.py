@@ -11,7 +11,7 @@ Provides fundamental cryptographic operations:
 
 __all__ = [
     "aes",
-    "rsa", 
+    "rsa",
     "ecdsa",
     "hashing",
     "key_derivation",

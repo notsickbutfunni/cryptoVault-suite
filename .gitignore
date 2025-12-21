@@ -205,3 +205,10 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# CryptoVault Suite: keystore (avoid committing private keys)
+keys/*_private.pem
+
+# OS-specific cruft (Windows)
+Thumbs.db
+Desktop.ini

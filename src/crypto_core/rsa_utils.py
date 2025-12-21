@@ -33,7 +33,9 @@ def generate_rsa_keypair(bits: int = 2048) -> Tuple[bytes, bytes]:
 
 
 def load_private_key(private_pem: bytes):
-    return serialization.load_pem_private_key(private_pem, password=None, backend=default_backend())
+    return serialization.load_pem_private_key(
+        private_pem, password=None, backend=default_backend()
+    )
 
 
 def load_public_key(public_pem: bytes):
