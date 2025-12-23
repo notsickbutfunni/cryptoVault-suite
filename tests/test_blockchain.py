@@ -1,6 +1,7 @@
 import hashlib
 
 from src.blockchain.block import create_block, genesis_block, validate_block
+from src.blockchain.ledger import Blockchain
 from src.blockchain.merkle import merkle_root, merkle_proof, verify_proof
 
 
@@ -38,3 +39,36 @@ def test_genesis_merkle_for_empty_data():
     assert blk.prev_hash == "0" * 64
     assert blk.is_valid_hash()
     assert blk.merkle_root == hashlib.sha256(b"").hexdigest()
+
+
+def test_blockchain_add_validate_and_persist(tmp_path):
+    chain = Blockchain(default_difficulty=10)
+    b1 = chain.add_block(["t1", "t2"])
+    b2 = chain.add_block(["t3"])
+
+    assert chain.is_valid()
+    assert b2.prev_hash == b1.hash
+
+    out = tmp_path / "chain.json"
+    chain.save(out)
+    loaded = Blockchain.load(out)
+    assert loaded.is_valid()
+    assert loaded.height == chain.height
+
+
+def test_blockchain_fork_resolution_and_audit():
+    c1 = Blockchain(default_difficulty=8)
+    c2 = Blockchain(default_difficulty=8)
+
+    c1.add_block(["A"])
+    c2.add_block(["A"])
+    c2.add_block(["B"])  # longer chain
+
+    chosen = c1.resolve_fork(c2)
+    assert chosen.height == 2
+
+    chosen.append_audit("user_login", user="alice")
+    proof1 = chosen.audit_proof()
+    chosen.append_audit("send_tx", user="alice")
+    proof2 = chosen.audit_proof()
+    assert proof1 != proof2
