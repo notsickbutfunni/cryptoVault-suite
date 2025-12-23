@@ -95,3 +95,30 @@ def genesis_block(
     data: Optional[List[Any]] = None, difficulty: int = 4
 ) -> Block:
     return create_block(0, "0" * 64, data or [], difficulty)
+
+
+def validate_block(prev_block: Optional[Block], block: Block) -> bool:
+    """
+    Validate a block against its predecessor and proof-of-work.
+    Checks: index sequencing, prev_hash match, merkle root matches data,
+    hash correctness and difficulty.
+    """
+
+    if prev_block is None:
+        expected_prev = "0" * 64
+        expected_index = 0
+    else:
+        expected_prev = prev_block.hash
+        expected_index = prev_block.index + 1
+
+    if block.prev_hash != expected_prev:
+        return False
+    if block.index != expected_index:
+        return False
+
+    # recompute merkle and hash
+    expected_merkle = Block.compute_merkle(block.data)
+    if block.merkle_root != expected_merkle:
+        return False
+
+    return block.is_valid_hash()
