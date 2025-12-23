@@ -1,4 +1,6 @@
-# API Reference (Concise)
+# API Reference
+
+Minimal signatures for quick lookup. All functions live under `src/` and mirror the CLI.
 
 ## Authentication
 - `RegistrationManager.register(username, password, email="") -> (bool, msg)`
@@ -17,13 +19,13 @@
 - `envelope_to_json(envelope: dict) -> str`
 - `verify_and_decrypt_envelope(envelope_json: str, recipient_private_pem: bytes, aad=b"CryptoVault") -> bytes`
 
-## Files (Encryption)
-- `encrypt_file(input_path, output_path, key, metadata=None, chunk_size=64*1024, progress_cb=None) -> dict(meta)`
-- `decrypt_file(input_path, output_path, key, chunk_size=64*1024, progress_cb=None) -> dict(meta)`
+## Files — Encryption
+- `encrypt_file(input_path, output_path, key, metadata=None, chunk_size=64*1024, progress_cb=None) -> dict`
+- `decrypt_file(input_path, output_path, key, chunk_size=64*1024, progress_cb=None) -> dict`
 - `encrypt_directory(source_dir, target_dir, key, chunk_size=64*1024, progress_cb=None) -> None`
 - `decrypt_directory(source_dir, target_dir, key, chunk_size=64*1024, progress_cb=None) -> None`
 
-## Files (Integrity)
+## Files — Integrity
 - `hash_file(path, chunk_size=1_048_576) -> bytes`
 - `file_chunk_hashes(path, chunk_size=1_048_576) -> List[bytes]`
 - `merkle_root(leaves) -> bytes`

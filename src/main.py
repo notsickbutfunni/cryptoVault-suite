@@ -1,3 +1,5 @@
+"""CLI entrypoint for CryptoVault: auth, messaging, files, and blockchain."""
+
 import argparse
 import hashlib
 import sys
@@ -86,6 +88,7 @@ def cmd_list(args: argparse.Namespace) -> None:
 
 
 def _key_from_args(args: argparse.Namespace) -> bytes:
+    """Derive a 32-byte key from hex, passphrase, or file contents."""
     if args.key_hex:
         key = bytes.fromhex(args.key_hex)
     elif args.passphrase:
@@ -281,6 +284,7 @@ def cmd_chain_resolve(args: argparse.Namespace) -> None:
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """Build the CLI parser; global flags must precede subcommands."""
     p = argparse.ArgumentParser(prog="cryptovault")
     p.add_argument("--store", default="keys", help="Key store directory")
     p.add_argument(

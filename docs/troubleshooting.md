@@ -1,35 +1,37 @@
 # Troubleshooting
 
-## CLI Argument Errors
-- "unrecognized arguments" when using `--user-db`/`--chain`/`--store`: place global flags **before** the subcommand, e.g. `python -m src.main --user-db users.json register ...`.
-- Wrong subcommand spelling: run `python -m src.main -h` to list commands.
+Grab-and-go fixes by topic. Global flags always come **before** subcommands.
 
-## File/Path Errors
-- `FileNotFoundError` during encrypt/decrypt: ensure `--input`/`--source` paths exist.
-- Permission denied: check OS permissions; avoid writing into protected locations.
+## CLI Arguments
+- "unrecognized arguments" with `--user-db`/`--chain`/`--store`: run `python -m src.main --user-db users.json register ...`
+- Subcommand typo: `python -m src.main -h`
 
-## TOTP / Login Issues
-- Invalid TOTP: ensure clock is in sync; verify the account uses the current secret.
-- Lost TOTP: use a backup code (`--backup-code`), then re-enroll TOTP.
-- Password rejected: remember minimum length (12+) and character-class requirements.
+## Files & Paths
+- `FileNotFoundError`: check `--input`/`--source` exists.
+- Permission denied: avoid protected folders; adjust OS permissions.
 
-## Messaging Issues
-- Envelope decrypt fails: verify correct recipient private key; confirm envelope file path.
-- Signature invalid: ensure sender/recipient keys are not swapped.
+## TOTP / Login
+- Invalid TOTP: sync system clock; confirm current secret.
+- Lost TOTP: use `--backup-code`, then re-enroll.
+- Password rejected: enforce 12+ chars with mixed classes.
 
-## File Encryption/Integrity
-- Decrypt fails: confirm passphrase/key matches original; verify `.enc` file is intact.
-- Integrity check fails: recompute `file-hash` on the original; ensure the expected root matches.
+## Messaging
+- Decrypt fails: ensure correct recipient private key and envelope path.
+- Signature invalid: verify sender/recipient keys are not swapped.
+
+## File Encryption & Integrity
+- Decrypt fails: match the original passphrase/key; confirm `.enc` file is intact.
+- Integrity mismatch: recompute `file-hash`; confirm expected root.
 
 ## Blockchain
-- Chain validation fails: confirm you are using the correct `chain.json`; avoid manual edits.
-- Fork resolution unexpected: check both chain files for validity; only longer cumulative work wins.
+- Validation fails: confirm correct `chain.json`; avoid manual edits.
+- Fork surprise: longer cumulative work wins—check both chains.
 
-## Resetting Local State (dev/testing)
-- Remove local artifacts: `users.json`, `chain.json`, `keys/`, `*.enc`, `sample_dir*`, `msg.json` (these are git-ignored).
-- Regenerate keys and rerun flows as needed.
+## Reset Local State (dev/testing)
+- Remove git-ignored artifacts: `users.json`, `chain.json`, `keys/`, `*.enc`, `sample_dir*`, `msg.json`
+- Regenerate keys and rerun flows.
 
-## Getting Help
+## Need Help Fast
 - List commands: `python -m src.main -h`
 - Command help: `python -m src.main <subcommand> -h`
-- Run tests: `pytest -q`; lint: `flake8 src tests`
+- Tests: `pytest -q`; lint: `flake8 src tests`
