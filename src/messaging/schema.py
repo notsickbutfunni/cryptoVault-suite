@@ -17,6 +17,7 @@ from .key_exchange import (
     derive_shared_secret,
     derive_session_key,
     load_private_key as load_ec_priv,
+    generate_ec_keypair,
 )
 from .encryption import encrypt_aes_gcm, decrypt_aes_gcm
 from .signatures import sign_message, verify_signature
@@ -92,6 +93,67 @@ def create_envelope(
     return envelope
 
 
+def create_envelope_ephemeral(
+    plaintext: bytes,
+    sender_sign_private_pem: bytes,
+    recipient_public_pem: bytes,
+    aad: bytes = b"CryptoVault",
+) -> Dict[str, Any]:
+    """
+    Create a signed JSON envelope using an ephemeral ECDH key for PFS.
+
+    Fields:
+      - version: "1.0"
+      - sender_sig_pub: base64-encoded PEM (stable identity key for signatures)
+      - eph_pub: base64-encoded PEM (ephemeral ECDH key)
+      - recipient_pub: base64-encoded PEM (recipient static key)
+      - nonce, salt, ciphertext: base64-encoded bytes
+      - timestamp: ISO-8601 UTC with 'Z'
+      - signature: base64-encoded DER signature over canonical payload
+      - signature_alg: "ECDSA-SHA256"
+    """
+    # Ephemeral ECDH keypair for this message
+    eph_priv_pem, eph_pub_pem = generate_ec_keypair()
+    shared = derive_shared_secret(eph_priv_pem, recipient_public_pem)
+    # Fresh salt for HKDF
+    key = derive_session_key(shared)  # derive_session_key generates salt when None
+    # For canonicalization we need the salt used; derive_session_key with None salt creates random
+    # To export salt, we must derive with explicit salt; so recompute with explicit salt
+    import os
+
+    salt = os.urandom(16)
+    key = derive_session_key(shared, salt=salt)
+    sealed = encrypt_aes_gcm(plaintext, key, aad=aad)
+
+    sender_sig_pub_pem = _pub_from_private(sender_sign_private_pem)
+
+    timestamp = (
+        datetime.now(timezone.utc)
+        .replace(microsecond=0)
+        .isoformat()
+        .replace("+00:00", "Z")
+    )
+
+    payload = {
+        "version": "1.0",
+        "sender_sig_pub": _b64e(sender_sig_pub_pem),
+        "eph_pub": _b64e(eph_pub_pem),
+        "recipient_pub": _b64e(recipient_public_pem),
+        "nonce": _b64e(sealed["nonce"]),
+        "salt": _b64e(salt),
+        "ciphertext": _b64e(sealed["ciphertext"]),
+        "timestamp": timestamp,
+    }
+
+    canon = _canonical_bytes(payload)
+    sig = sign_message(sender_sign_private_pem, canon)
+
+    envelope = dict(payload)
+    envelope["signature"] = _b64e(sig)
+    envelope["signature_alg"] = "ECDSA-SHA256"
+    return envelope
+
+
 def envelope_to_json(envelope: Dict[str, Any]) -> str:
     return json.dumps(envelope, indent=2)
 
@@ -107,18 +169,33 @@ def verify_and_decrypt_envelope(
     Returns plaintext bytes if verification and decryption succeed.
     """
     env = json.loads(envelope_json)
-    payload = {
-        "version": env["version"],
-        "sender_pub": env["sender_pub"],
-        "recipient_pub": env["recipient_pub"],
-        "nonce": env["nonce"],
-        "salt": env["salt"],
-        "ciphertext": env["ciphertext"],
-        "timestamp": env["timestamp"],
-    }
+    # Backward-compatible canonicalization: support legacy fields or ephemeral fields
+    if "sender_pub" in env:
+        payload = {
+            "version": env["version"],
+            "sender_pub": env["sender_pub"],
+            "recipient_pub": env["recipient_pub"],
+            "nonce": env["nonce"],
+            "salt": env["salt"],
+            "ciphertext": env["ciphertext"],
+            "timestamp": env["timestamp"],
+        }
+        signing_pub_b64 = env["sender_pub"]
+    else:
+        payload = {
+            "version": env["version"],
+            "sender_sig_pub": env["sender_sig_pub"],
+            "eph_pub": env["eph_pub"],
+            "recipient_pub": env["recipient_pub"],
+            "nonce": env["nonce"],
+            "salt": env["salt"],
+            "ciphertext": env["ciphertext"],
+            "timestamp": env["timestamp"],
+        }
+        signing_pub_b64 = env["sender_sig_pub"]
 
     canon = _canonical_bytes(payload)
-    sender_pub_pem = _b64d(env["sender_pub"])
+    sender_pub_pem = _b64d(signing_pub_b64)
     signature = _b64d(env["signature"])
 
     if not verify_signature(sender_pub_pem, canon, signature):
@@ -127,7 +204,11 @@ def verify_and_decrypt_envelope(
     nonce = _b64d(env["nonce"])
     salt = _b64d(env["salt"])
     ciphertext = _b64d(env["ciphertext"])
-    peer_pub = _b64d(env["sender_pub"])  # sender public key
+    # For ECDH, prefer ephemeral ECDH key if included; else fall back to sender_pub (legacy)
+    if "eph_pub" in env:
+        peer_pub = _b64d(env["eph_pub"])
+    else:
+        peer_pub = _b64d(env["sender_pub"])
 
     shared = derive_shared_secret(recipient_private_pem, peer_pub)
     key = derive_session_key(shared, salt=salt)

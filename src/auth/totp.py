@@ -98,7 +98,13 @@ class TOTPManager:
 
         self.users[username]["totp_secret"] = secret
         self.users[username]["totp_enabled"] = True
-        self.users[username]["backup_codes"] = self._generate_backup_codes()
+        # Generate plaintext codes then store hashed versions
+        codes_plain = self._generate_backup_codes()
+        self._last_generated_codes = getattr(self, "_last_generated_codes", {})
+        self._last_generated_codes[username] = codes_plain
+        self.users[username]["backup_codes"] = [
+            self._hash_code(c) for c in codes_plain
+        ]
         self._save_users()
 
         return True, "TOTP enabled successfully"
@@ -175,10 +181,9 @@ class TOTPManager:
 
         user_data = self.users[username]
         backup_codes = user_data.get("backup_codes", [])
-
-        if code in backup_codes:
-            # Remove used backup code
-            backup_codes.remove(code)
+        code_hash = self._hash_code(code)
+        if code_hash in backup_codes:
+            backup_codes.remove(code_hash)
             self._save_users()
             return True, "Backup code verified and consumed"
 
@@ -202,6 +207,20 @@ class TOTPManager:
             code = secrets.token_hex(4).upper()  # 8 character hex string
             codes.append(code)
         return codes
+
+    @staticmethod
+    def _hash_code(code: str) -> str:
+        import hashlib
+
+        return hashlib.sha256(code.encode("utf-8")).hexdigest()
+
+    def get_last_generated_backup_codes(self, username: str) -> Tuple[bool, list]:
+        """
+        Return the most recently generated plaintext backup codes for the user.
+        Intended for immediate display after enabling TOTP; not persisted.
+        """
+        codes = getattr(self, "_last_generated_codes", {}).get(username, [])
+        return (len(codes) > 0, codes)
 
     def get_backup_codes(self, username: str) -> Tuple[bool, list]:
         """

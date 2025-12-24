@@ -1,6 +1,10 @@
 """Crypto Core - Core cryptographic implementations
 
 Provides fundamental cryptographic operations:
+- SHA-256 hash function (custom implementation)
+- Merkle tree with proof generation
+- Classical ciphers (Caesar, Vigenère) with cryptanalysis
+- Modular exponentiation and RSA (custom implementation)
 - AES encryption (CBC/GCM modes)
 - RSA asymmetric encryption
 - ECDSA digital signatures
@@ -10,9 +14,10 @@ Provides fundamental cryptographic operations:
 """
 
 __all__ = [
-    "aes",
-    "rsa",
-    "ecdsa",
+    "sha256",
+    "classical",
+    "modular",
+    "rsa_utils",
     "hashing",
     "key_derivation",
 ]

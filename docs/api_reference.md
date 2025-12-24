@@ -2,6 +2,51 @@
 
 Minimal signatures for quick lookup. All functions live under `src/` and mirror the CLI.
 
+## Custom Crypto (From-Scratch Implementations)
+
+### SHA-256 Hash Function
+- `SHA256(data=b"") -> SHA256` — Streaming SHA-256 object (FIPS 180-4)
+- `SHA256.update(data: bytes) -> None` — Add data to hash
+- `SHA256.digest() -> bytes` — Get 32-byte hash
+- `SHA256.hexdigest() -> str` — Get 64-char hex hash
+- `SHA256.copy() -> SHA256` — Clone hash state
+- `sha256(data: bytes) -> bytes` — One-shot hashing
+- `sha256_hex(data: bytes) -> str` — One-shot hex hashing
+
+### Caesar Cipher
+- `CaesarCipher.encrypt(plaintext: str, shift: int) -> str`
+- `CaesarCipher.decrypt(ciphertext: str, shift: int) -> str`
+- `CaesarCipher.brute_force(ciphertext: str) -> List[(shift, plaintext, score)]`
+- `CaesarCipher._chi_squared_score(text: str) -> float` — Frequency analysis scoring
+
+### Vigenère Cipher
+- `VigenèreCipher.encrypt(plaintext: str, key: str) -> str`
+- `VigenèreCipher.decrypt(ciphertext: str, key: str) -> str`
+- `VigenèreCipher.kasiski_examination(ciphertext: str) -> Dict[int, int]` — Key length detection
+- `VigenèreCipher.index_of_coincidence(text: str) -> float` — IC calculation
+- `VigenèreCipher.estimate_key_length_ic(ciphertext: str) -> int` — IC-based key length
+
+### Modular Arithmetic
+- `pow_mod(base: int, exp: int, mod: int) -> int` — Square-and-multiply exponentiation
+- `extended_gcd(a: int, b: int) -> (gcd, x, y)` — Extended Euclidean algorithm
+- `mod_inverse(a: int, m: int) -> int` — Modular multiplicative inverse
+- `is_prime(n: int, k=40) -> bool` — Miller-Rabin primality test
+- `generate_prime(bit_length: int) -> int` — Secure random prime generation
+- `gcd(a: int, b: int) -> int` — Euclidean algorithm
+- `lcm(a: int, b: int) -> int` — Least common multiple
+
+### RSA Key Generation & Encryption
+- `RSAKeyGenerator.generate_keypair(bit_length=2048) -> ((n, e), (n, d))` — RSA keypair
+- `RSAKeyGenerator.encrypt(public_key: (n, e), plaintext: int) -> int`
+- `RSAKeyGenerator.decrypt(private_key: (n, d), ciphertext: int) -> int`
+
+### Merkle Tree
+- `merkle_leaves(items) -> List[bytes]` — Hash transaction items
+- `merkle_root(items) -> bytes` — Single Merkle root
+- `merkle_tree(items) -> List[List[bytes]]` — Full tree levels
+- `merkle_proof(items, index: int) -> List[(bytes, str)]` — Inclusion proof
+- `verify_proof(leaf_hash, proof, root) -> bool` — Proof verification
+
 ## Authentication
 - `RegistrationManager.register(username, password, email="") -> (bool, msg)`
 - `RegistrationManager.validate_username/password(...) -> (bool, msg)`

@@ -125,12 +125,15 @@ class RegistrationManager:
             "username": username,
             "password_hash": password_hash,
             "salt": salt,
+            "password_scheme": "argon2id",
             "email": email,
             "created_at": datetime.now().isoformat(),
             "active": True,
             "totp_enabled": False,
             "totp_secret": None,
             "backup_codes": [],
+            "failed_attempts": 0,
+            "lockout_until": None,
         }
 
         self.login_manager.users[username] = user_data

@@ -168,6 +168,19 @@ class TestRegistrationManager:
         valid, msg = reg_manager.validate_password("SecurePass123!@#")
         assert valid
         assert "strong" in msg.lower()
+
+    def test_account_lockout_after_failures(self, reg_manager):
+        """Account locks after repeated failed attempts."""
+        reg_manager.register("lockuser", "SecurePass123!@#")
+        login = reg_manager.login_manager
+        # 5 failed attempts
+        for _ in range(5):
+            success, msg = login.login("lockuser", "wrong")
+            assert not success
+        # Now locked out, even with correct password
+        success, msg = login.login("lockuser", "SecurePass123!@#")
+        assert not success
+        assert "locked" in msg.lower()
     
     def test_register_success(self, reg_manager):
         """Test successful user registration."""
@@ -331,24 +344,29 @@ class TestTOTPManager:
         secret, _ = totp_manager.generate_secret(setup_user)
         totp_manager.enable_totp(setup_user, secret)
         
+        # Hashed codes stored
         codes = totp_manager.users[setup_user]['backup_codes']
         assert len(codes) == 10
-        assert all(len(code) == 8 for code in codes)  # 8 character hex codes
+        assert all(len(code) == 64 for code in codes)
     
     def test_verify_backup_code(self, totp_manager, setup_user):
         """Test backup code verification."""
         secret, _ = totp_manager.generate_secret(setup_user)
         totp_manager.enable_totp(setup_user, secret)
         
-        backup_codes = totp_manager.users[setup_user]['backup_codes']
-        code = backup_codes[0]
+        # Retrieve plaintext codes generated at enable-time (ephemeral)
+        ok, plain_codes = totp_manager.get_last_generated_backup_codes(setup_user)
+        assert ok
+        code = plain_codes[0]
         
         # Verify backup code
         valid, msg = totp_manager.verify_backup_code(setup_user, code)
         assert valid
         
         # Verify code is consumed
-        assert code not in totp_manager.users[setup_user]['backup_codes']
+        # Stored hashed list should not contain the used code's hash
+        from hashlib import sha256
+        assert sha256(code.encode('utf-8')).hexdigest() not in totp_manager.users[setup_user]['backup_codes']
         assert len(totp_manager.users[setup_user]['backup_codes']) == 9
     
     def test_verify_invalid_backup_code(self, totp_manager, setup_user):
@@ -405,6 +423,18 @@ class TestAuthenticationIntegration:
         token = pyotp.TOTP(secret).now()
         valid, msg = totp.verify_totp("alice", token)
         assert valid
+
+    def test_session_token_issue_and_validate(self, temp_db):
+        """Session token issuance and validation works."""
+        reg = RegistrationManager(temp_db)
+        reg.register("sessuser", "SecurePass123!@#", "sess@example.com")
+        login = LoginManager(temp_db)
+        success, _ = login.login("sessuser", "SecurePass123!@#")
+        assert success
+        token = login.issue_session_token("sessuser", ttl_seconds=2)
+        from src.auth.session import SessionManager
+        sm = SessionManager()
+        assert sm.validate(token)
 
 
 if __name__ == '__main__':

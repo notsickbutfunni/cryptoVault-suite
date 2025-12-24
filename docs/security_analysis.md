@@ -8,31 +8,58 @@ Compact threat model, crypto rationale, and operational guardrails.
 - DoS not covered (heavy PoW, very large files).
 
 ## Cryptography
-- Symmetric: AES-256-GCM for confidentiality + integrity.
-- KDF: PBKDF2-HMAC-SHA256 (100k iterations); SHA-256 for hashing.
-- Asymmetric: ECDH (secp256r1) for session keys; ECDSA (secp256r1) for signatures.
-- Integrity: Merkle trees over file chunks; SHA-256 for block/tx roots.
-- Ledger: PoW with configurable difficulty; longest cumulative work wins.
+
+### Core Algorithms
+- **Symmetric**: AES-256-GCM for confidentiality + integrity (cryptography library)
+- **KDF**: Argon2id (primary) + PBKDF2-HMAC-SHA256 (≥100k iterations)
+- **Hashing**: SHA-256 (custom FIPS 180-4 implementation + library fallback)
+- **Asymmetric**: ECDH (P-256/secp256r1) for key exchange; ECDSA (P-256) for signatures
+- **Integrity**: Merkle trees (custom implementation) over file chunks; SHA-256 block/tx roots
+- **Ledger**: PoW (SHA-256) with configurable difficulty; longest cumulative work wins
+- **Session tokens**: HMAC-SHA256 with hashed storage; expiry-based revocation
+- **Backup codes**: SHA-256 hashed; single-use enforcement
+
+### Custom Implementations (Educational & Cryptanalysis)
+1. **SHA-256**: Complete FIPS 180-4 implementation (~200 lines); used in file integrity checks
+2. **Merkle Tree**: Binary tree with sibling-based inclusion proofs; transaction verification
+3. **Caesar Cipher**: Shift cipher with chi-squared frequency analysis breaker
+4. **Vigenère Cipher**: Polyalphabetic cipher with Kasiski examination & IC-based key length detection
+5. **Modular Exponentiation**: Square-and-multiply algorithm (O(log exp)); RSA foundation
+6. **RSA**: Complete key generation with Miller-Rabin prime testing; secure random initialization
 
 ## Key Handling
 - Keys and user DB stay local and are git-ignored; no cloud persistence.
 - CLI accepts passphrase, hex, or file-based keys; passphrase route depends on PBKDF2 strength.
 - TOTP secrets + backup codes stored in `users.json`; rotate by re-enrolling.
 
+## Implemented Security Features
+- ✅ **Rate limiting + account lockout**: 5-attempt lockout with 15-min expiry
+- ✅ **Argon2id password hashing**: Memory-hard KDF (primary); PBKDF2 fallback
+- ✅ **Session tokens**: HMAC-SHA256 with expiry and revocation
+- ✅ **Hashed backup codes**: SHA-256 hashed with atomic single-use enforcement
+- ✅ **Ephemeral ECDH**: Per-message keypair for perfect forward secrecy (PFS)
+- ✅ **FEK wrapping**: File encryption key wrapped with AES-256-GCM
+- ✅ **HMAC verification**: HMAC-SHA256 over ciphertext before decryption (tamper detection)
+- ✅ **Constant-time comparisons**: `hmac.compare_digest()` for sensitive data
+- ✅ **CSPRNG**: `secrets` module for all randomness
+- ✅ **Custom crypto**: 6 implementations for educational cryptanalysis
+
 ## Known Limitations
-- No account lockout/rate limiting; local DB only.
-- Static PoW difficulty; no dynamic adjustment.
-- Fork resolution is longest-work only; no peer networking/consensus.
-- Plaintext/temp files not securely wiped; relies on OS semantics.
-- No HSM/secure enclave; keys live in files.
+- **Local-first**: No network encryption; messaging assumes pre-shared keys
+- **PoW**: Static difficulty; no dynamic adjustment
+- **Fork resolution**: Longest-work only; no peer networking/consensus
+- **Memory**: Python garbage collection only (no explicit mlock); use `cryptography` library for sensitive ops
+- **Storage**: Plaintext/temp files not securely wiped; relies on OS semantics
+- **Hardware**: No HSM/secure enclave; keys live in files (can be wrapped with KEK in production)
+- **Textbook RSA**: No OAEP padding in custom RSA (educational only; use library for production)
 
 ## Future Improvements
-- Add lockout/rate limiting and audit triggers on auth failures.
-- Move password hashing to Argon2id or tunable KDF with stronger defaults.
-- Wrap private keys with a KEK and optionally hardware-backed storage.
-- Add authenticated peer sync and richer fork detection/checkpoints.
-- Provide secure wipe routines and streaming in-place verification.
-- TOTP drift detection and optional WebAuthn/FIDO2 second factor.
+- Add WebAuthn/FIDO2 as optional second factor
+- Wrap private keys with KEK and optional hardware-backed storage
+- Add authenticated peer sync and richer fork detection/checkpoints
+- Provide secure wipe routines and in-place streaming verification
+- Implement password reset with signed recovery tokens
+- Support RSA-OAEP for production-grade encryption
 
 ## Operational Guidance
 - Keep system time synced for TOTP and signatures.

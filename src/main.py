@@ -9,12 +9,17 @@ from typing import List, Optional
 from src.auth.login import LoginManager
 from src.auth.registration import RegistrationManager
 from src.auth.totp import TOTPManager
+from src.auth.login import LoginManager
 from src.blockchain.ledger import Blockchain
 from src.files.encrypt import (
     decrypt_directory,
     decrypt_file,
     encrypt_directory,
     encrypt_file,
+)
+from src.files.secure import (
+    encrypt_file_pw as encrypt_file_pw2,
+    decrypt_file_pw as decrypt_file_pw2,
 )
 from src.files.integrity import (
     file_merkle_root,
@@ -197,6 +202,30 @@ def cmd_login(args: argparse.Namespace) -> None:
     print(f"Authenticated {args.username}")
 
 
+def cmd_login_session(args: argparse.Namespace) -> None:
+    """Login and issue a time-limited HMAC-SHA256 session token."""
+    login_mgr = LoginManager(args.user_db)
+    ok, msg = login_mgr.login(args.username, args.password)
+    if not ok:
+        raise SystemExit(msg)
+
+    totp_mgr = TOTPManager(args.user_db)
+    user = totp_mgr.users.get(args.username, {})
+    if user.get("totp_enabled"):
+        if args.totp:
+            ok, msg = totp_mgr.verify_totp(args.username, args.totp)
+        elif args.backup_code:
+            ok, msg = totp_mgr.verify_backup_code(args.username, args.backup_code)
+        else:
+            raise SystemExit("TOTP token or --backup-code required")
+        if not ok:
+            raise SystemExit(msg)
+
+    login_mgr.update_last_login(args.username)
+    token = login_mgr.issue_session_token(args.username, ttl_seconds=args.ttl)
+    print(token)
+
+
 def cmd_enable_totp(args: argparse.Namespace) -> None:
     totp_mgr = TOTPManager(args.user_db)
     if args.username not in totp_mgr.users:
@@ -341,6 +370,14 @@ def build_parser() -> argparse.ArgumentParser:
     log.add_argument("--backup-code")
     log.set_defaults(func=cmd_login)
 
+    lsess = sub.add_parser("login-session", help="Login and issue a session token")
+    lsess.add_argument("--username", required=True)
+    lsess.add_argument("--password", required=True)
+    lsess.add_argument("--totp")
+    lsess.add_argument("--backup-code")
+    lsess.add_argument("--ttl", type=int, default=3600, help="Token TTL seconds")
+    lsess.set_defaults(func=cmd_login_session)
+
     et = sub.add_parser("enable-totp", help="Enable TOTP for a user")
     et.add_argument("--username", required=True)
     et.set_defaults(func=cmd_enable_totp)
@@ -401,6 +438,24 @@ def build_parser() -> argparse.ArgumentParser:
         "--expected-root", required=True, help="Hex-encoded Merkle root"
     )
     fv.set_defaults(func=cmd_file_verify)
+
+    fepw = sub.add_parser("file-encrypt-pw", help="Encrypt a file using password (PBKDF2 + FEK + HMAC)")
+    fepw.add_argument("--input", required=True)
+    fepw.add_argument("--output", required=True)
+    fepw.add_argument("--password", required=True)
+    fepw.add_argument("--pbkdf2-iters", type=int, default=200000)
+    fepw.add_argument("--chunk-size", type=int, default=64 * 1024)
+    fepw.set_defaults(func=lambda args: encrypt_file_pw2(args.input, args.output, args.password, pbkdf2_iters=args.pbkdf2_iters, chunk_size=args.chunk_size))
+
+    fdpw = sub.add_parser("file-decrypt-pw", help="Decrypt a password-encrypted file")
+    fdpw.add_argument("--input", required=True)
+    fdpw.add_argument("--output", required=True)
+    fdpw.add_argument("--password", required=True)
+    fdpw.add_argument("--chunk-size", type=int, default=64 * 1024)
+    def _run_decrypt_pw(args):
+        decrypt_file_pw2(args.input, args.output, args.password, chunk_size=args.chunk_size)
+        print(f"Decrypted {args.input} -> {args.output}")
+    fdpw.set_defaults(func=_run_decrypt_pw)
 
     ca = sub.add_parser("chain-add", help="Add a block to the blockchain")
     ca.add_argument("--data", action="append", help="Transaction payloads")
