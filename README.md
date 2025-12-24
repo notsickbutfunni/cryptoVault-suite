@@ -1,91 +1,7 @@
 # CryptoVault Suite – Compliance Assessment
 
 ## Project Overview
-CryptoVault Suite is a comprehensive cryptographic application implementing secure authentication, end-to-end messaging, file encryption, and blockchain audit logging. All modules achieve **8–10 out of 10** compliance points against the security rubric.
-
----
-
-## Core Crypto Library Requirements ✅
-
-### Custom Implementations (From Scratch)
-CryptoVault implements **4 core cryptographic algorithms from scratch** (exceeding the minimum requirement of 3):
-
-#### 1. **SHA-256 Hash Function** (Option B)
-- **File**: `src/crypto_core/sha256.py`
-- **Implementation**: Complete FIPS 180-4 compliant SHA-256 without library hash functions
-- **Features**:
-  - Full round function with sigma/gamma rotations
-  - Merkle-Damgård construction
-  - Streaming hash with buffer management
-  - Constants: K and INITIAL_HASH arrays (64 K values)
-- **Tests**: `tests/test_crypto_core.py` (10 tests, all passing)
-- **Usage**: Used in file integrity, blockchain, and message signing
-
-#### 2. **Merkle Tree with Proof Generation** (Option B)
-- **File**: `src/blockchain/merkle.py`
-- **Implementation**: Complete Merkle tree construction with sibling-based inclusion proofs
-- **Features**:
-  - Leaf hashing with SHA-256
-  - Level-by-level tree construction
-  - Merkle proof generation (path from leaf to root)
-  - Proof verification with tree reconstruction
-  - Handles odd-numbered leaves via duplication
-- **Tests**: `tests/test_files_integrity.py` (5 tests, all passing)
-- **Usage**: Transaction integrity in blockchain, file chunk verification
-
-#### 3. **Caesar Cipher with Frequency Analysis** (Option A)
-- **File**: `src/crypto_core/classical.py`
-- **Implementation**: Classical cipher with cryptanalysis capabilities
-- **Features**:
-  - Caesar encryption/decryption (shift cipher)
-  - Brute-force attack with all 26 shifts
-  - Chi-squared frequency analysis scoring
-  - English letter frequency database
-  - Automatic plaintext detection
-- **Tests**: `tests/test_custom_crypto.py` (9 tests, all passing)
-- **Usage**: Educational cryptanalysis demonstrations
-
-#### 4. **Vigenère Cipher with Kasiski Examination** (Option A)
-- **File**: `src/crypto_core/classical.py`
-- **Implementation**: Polyalphabetic cipher with key length detection
-- **Features**:
-  - Vigenère encryption/decryption (key-based shift)
-  - Kasiski examination (repeated sequence analysis)
-  - Index of coincidence (IC) calculation
-  - Automated key length estimation
-  - Handles non-alphabetic characters
-- **Tests**: `tests/test_custom_crypto.py` (10 tests, all passing)
-- **Usage**: Classical cryptanalysis demonstrations
-
-#### 5. **Modular Exponentiation (Square-and-Multiply)** (Option D)
-- **File**: `src/crypto_core/modular.py`
-- **Implementation**: Efficient modular exponentiation for large integers
-- **Features**:
-  - Square-and-multiply algorithm (O(log exp) complexity)
-  - Extended Euclidean algorithm for GCD
-  - Modular multiplicative inverse
-  - Miller-Rabin primality testing (40 rounds)
-  - Secure random prime generation
-- **Tests**: `tests/test_custom_crypto.py` (8 tests, all passing)
-- **Usage**: RSA key generation and cryptographic operations
-
-#### 6. **RSA Key Generation & Encryption** (Option D)
-- **File**: `src/crypto_core/modular.py`
-- **Implementation**: Custom RSA keypair generation using custom modular arithmetic
-- **Features**:
-  - Prime generation with Miller-Rabin testing
-  - RSA modulus computation (n = p × q)
-  - Carmichael function (λ) for key generation
-  - Public/private exponent calculation
-  - Deterministic RSA encryption/decryption
-  - Uses custom `pow_mod` for all exponentiation
-- **Tests**: `tests/test_custom_crypto.py` (5 tests, all passing)
-- **Usage**: Asymmetric encryption demonstrations
-
-### Summary: Custom Crypto Implementation
-- **Total Custom Implementations**: 6 (exceeds 3-requirement)
-- **Total Tests**: 39 custom crypto tests (all passing)
-- **Total Test Suite**: 116 tests (all passing)
+CryptoVault Suite is a comprehensive cryptographic application implementing secure authentication, end-to-end messaging, file encryption, and blockchain audit logging. 
 
 ---
 
@@ -220,6 +136,85 @@ CryptoVault implements **4 core cryptographic algorithms from scratch** (exceedi
 
 ---
 
+## Core Crypto Library Requirements ✅
+
+### Custom Implementations (From Scratch)
+CryptoVault implements **4 core cryptographic algorithms from scratch**:
+
+#### 1. **SHA-256 Hash Function** 
+- **File**: `src/crypto_core/sha256.py`
+- **Implementation**: Complete FIPS 180-4 compliant SHA-256 without library hash functions
+- **Features**:
+  - Full round function with sigma/gamma rotations
+  - Merkle-Damgård construction
+  - Streaming hash with buffer management
+  - Constants: K and INITIAL_HASH arrays (64 K values)
+- **Tests**: `tests/test_crypto_core.py` (10 tests, all passing)
+- **Usage**: Used in file integrity, blockchain, and message signing
+
+#### 2. **Merkle Tree with Proof Generation** 
+- **File**: `src/blockchain/merkle.py`
+- **Implementation**: Complete Merkle tree construction with sibling-based inclusion proofs
+- **Features**:
+  - Leaf hashing with SHA-256
+  - Level-by-level tree construction
+  - Merkle proof generation (path from leaf to root)
+  - Proof verification with tree reconstruction
+  - Handles odd-numbered leaves via duplication
+- **Tests**: `tests/test_files_integrity.py` (5 tests, all passing)
+- **Usage**: Transaction integrity in blockchain, file chunk verification
+
+#### 3. **Caesar Cipher with Frequency Analysis** 
+- **File**: `src/crypto_core/classical.py`
+- **Implementation**: Classical cipher with cryptanalysis capabilities
+- **Features**:
+  - Caesar encryption/decryption (shift cipher)
+  - Brute-force attack with all 26 shifts
+  - Chi-squared frequency analysis scoring
+  - English letter frequency database
+  - Automatic plaintext detection
+- **Tests**: `tests/test_custom_crypto.py` (9 tests, all passing)
+- **Usage**: Educational cryptanalysis demonstrations
+
+#### 4. **Vigenère Cipher with Kasiski Examination** 
+- **File**: `src/crypto_core/classical.py`
+- **Implementation**: Polyalphabetic cipher with key length detection
+- **Features**:
+  - Vigenère encryption/decryption (key-based shift)
+  - Kasiski examination (repeated sequence analysis)
+  - Index of coincidence (IC) calculation
+  - Automated key length estimation
+  - Handles non-alphabetic characters
+- **Tests**: `tests/test_custom_crypto.py` (10 tests, all passing)
+- **Usage**: Classical cryptanalysis demonstrations
+
+#### 5. **Modular Exponentiation (Square-and-Multiply)** 
+- **File**: `src/crypto_core/modular.py`
+- **Implementation**: Efficient modular exponentiation for large integers
+- **Features**:
+  - Square-and-multiply algorithm (O(log exp) complexity)
+  - Extended Euclidean algorithm for GCD
+  - Modular multiplicative inverse
+  - Miller-Rabin primality testing (40 rounds)
+  - Secure random prime generation
+- **Tests**: `tests/test_custom_crypto.py` (8 tests, all passing)
+- **Usage**: RSA key generation and cryptographic operations
+
+#### 6. **RSA Key Generation & Encryption** (Option D)
+- **File**: `src/crypto_core/modular.py`
+- **Implementation**: Custom RSA keypair generation using custom modular arithmetic
+- **Features**:
+  - Prime generation with Miller-Rabin testing
+  - RSA modulus computation (n = p × q)
+  - Carmichael function (λ) for key generation
+  - Public/private exponent calculation
+  - Deterministic RSA encryption/decryption
+  - Uses custom `pow_mod` for all exponentiation
+- **Tests**: `tests/test_custom_crypto.py` (5 tests, all passing)
+- **Usage**: Asymmetric encryption demonstrations
+
+---
+
 ## Testing
 
 ### Test Coverage
@@ -332,17 +327,6 @@ streamlit run ui/app.py
 
 ---
 
-## Compliance Score
-
-| Module | Required | Bonus | Total | Status |
-|--------|----------|-------|-------|--------|
-| Auth | 7 | 3 | 10 | 🟢 7/10 |
-| Messaging | 8 | 0 | 8 | 🟢 8/10 |
-| Files | 8 | 0 | 8 | 🟢 8/10 |
-| Blockchain | 8 | 0 | 8 | 🟢 8/10 |
-| **Total** | **31** | **3** | **34** | **🟢 31/34** |
-
----
 
 ## Quick Start
 
@@ -408,5 +392,9 @@ docs/
 ```
 
 ---
+
+## Members
+
+- Khairatkyzy Inkar | [220107158@stu.sdu.edu.kz](220107158@stu.sdu.edu.kz)
 
 
